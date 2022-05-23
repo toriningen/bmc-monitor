@@ -108,6 +108,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         };
 
         match (state, next_state) {
+            (Healthy, Failed { since }) => {
+                println!("Fans busy since {:?}, waiting...", since);
+            }
             (Failed { since }, Restarted { .. }) => {
                 println!("Failed since {:?}, restarting BMC...", since);
                 let sp: io::Result<bool> = (|| Ok(process::Command::new("ipmitool").args(["bmc", "reset", "cold"]).spawn()?.wait()?.success()) )();
