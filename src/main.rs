@@ -56,7 +56,7 @@ impl Fans {
 }
 
 const RESTART_THRESHOLD: Duration = Duration::from_millis(5000);
-const RECOVERY_THRESHOLD: Duration = Duration::from_millis(10000);
+const RECOVERY_THRESHOLD: Duration = Duration::from_millis(30000); // BMC reboot takes ~22 seconds on my system, so that's tops
 
 #[derive(Debug, Copy, Clone)]
 enum FansState {
