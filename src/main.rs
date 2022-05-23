@@ -67,9 +67,7 @@ enum FansState {
     Restarted {
         since: Instant,
     },
-    FuckedUp {
-        since: Instant,
-    },
+    FuckedUp,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -98,32 +96,31 @@ fn main() -> Result<(), Box<dyn Error>> {
                 },
                 Restarted { since } => {
                     if since.elapsed() >= RECOVERY_THRESHOLD {
-                        FuckedUp { since: now }
+                        FuckedUp
                     } else {
                         state
                     }
                 },
-                FuckedUp { .. } => {
+                FuckedUp => {
                     Restarted { since: now }
                 }
             }
         };
 
-        match next_state {
-            Healthy => {},
-            Failed { .. } => {},
-            Restarted { .. } => {
+        match (state, next_state) {
+            (Failed { .. }, Restarted { .. }) => {
                 let sp: io::Result<bool> = (|| Ok(process::Command::new("ipmitool").args(["bmc", "reset", "cold"]).spawn()?.wait()?.success()) )();
                 if let Err(err) = sp {
                     eprintln!("Couldn't reset BMC: {}", err);
                 }
             },
-            FuckedUp { .. } => {
+            (Restarted { .. }, FuckedUp) => {
                 let sp: io::Result<bool> = (|| Ok(process::Command::new("notify_fan_failure.sh").spawn()?.wait()?.success()) )();
                 if let Err(err) = sp {
                     eprintln!("Couldn't notify about fan failure: {}", err);
                 }
             },
+            _ => {},
         }
 
         println!("state = {state:?}, next_state = {next_state:?}");
