@@ -1,0 +1,13 @@
+[Unit]
+Description=Monitor fan status and restart BMC if they fail
+After=network.target
+Wants=network-online.target
+
+[Service]
+Restart=always
+Type=simple
+ExecStart=/opt/bmc-monitor/target/release/bmc-monitor
+Environment=
+
+[Install]
+WantedBy=multi-user.target
