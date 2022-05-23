@@ -108,13 +108,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         };
 
         match (state, next_state) {
-            (Failed { .. }, Restarted { .. }) => {
+            (Failed { since }, Restarted { .. }) => {
+                println!("Failed since {:?}, restarting BMC...", since);
                 let sp: io::Result<bool> = (|| Ok(process::Command::new("ipmitool").args(["bmc", "reset", "cold"]).spawn()?.wait()?.success()) )();
                 if let Err(err) = sp {
                     eprintln!("Couldn't reset BMC: {}", err);
                 }
             },
-            (Restarted { .. }, FuckedUp) => {
+            (Restarted { since }, FuckedUp) => {
+                println!("Fucked up since {:?}, notifying about dead fans...", since);
                 let sp: io::Result<bool> = (|| Ok(process::Command::new("notify_fan_failure.sh").spawn()?.wait()?.success()) )();
                 if let Err(err) = sp {
                     eprintln!("Couldn't notify about fan failure: {}", err);
@@ -123,7 +125,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             _ => {},
         }
 
-        println!("state = {state:?}, next_state = {next_state:?}");
+        //println!("state = {state:?}, next_state = {next_state:?}");
 
         state = next_state;
 
